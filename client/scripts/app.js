@@ -4,10 +4,6 @@ var app = {
 
   server: 'https://api.parse.com/1/classes/chatterbox',
 
-  messages: [],
-
-  newMessages: [],
-
   send: function(message) {
     var app = this;
     $.ajax({
@@ -26,34 +22,18 @@ var app = {
     });
   },
 
-  updateMessages: function ( ) {
+  updateMessages: function ( messages ) {
     var app = this;
-
-    if ( this.messages.length === 0 ) {
-      this.messages = this.newMessages;
-      var newMsgs = this.messages;
-    } else if ( this.newMessages.length > this.messages.length ) {
-      var diff = this.newMessages.length - this.messages.length;
-      var newMsgs = this.newMessages.slice(diff);
-    }
-
-    _.each( newMsgs, function (message) {
-      var user = "";
-      var msgtxt = "";
-        if ( app.validate(message.username) ) {
-        user = message.username;
-        }
-        if ( app.validate(message.text) ) {
-          msgtxt = message.text;
-        }
-      var msg = $('<li><span class="createdBy">'+user+'</span>: '+msgtxt+'</li>');
-      if (user !== "" && msg.text !== "") {
-        $('.messages').append(msg);
-      };
-      console.log(message);
-      app.messages.push(message);
-    });
-    this.newMessages = [];
+    $('.message').remove();
+    _.each (messages, function (message) {
+      var user = app.validate(message.username);
+      var text = app.validate(message.text);
+      var roomName = app.validate(message.roomname);
+      if ( user !== "" && text !== "" ) {
+        var chatMessage = $('<p class = "message">' + user + ':' + text + '</p>');
+        $('#main').append(chatMessage);
+      }
+    })
   },
 
   fetch: function( ) {
@@ -64,9 +44,8 @@ var app = {
       type: 'GET',
       contentType: 'application/json',
       success: function (data) {
-        app.newMessages = data.results;
-        app.updateMessages( );
-        console.log('chatterbox: Messages fetched');
+        app.updateMessages( data.results);
+        //console.log('chatterbox: Messages fetched');
       },
       error: function (data) {
         // See: https://developer.mozilla.org/en-US/docs/Web/API/console.error
@@ -77,17 +56,43 @@ var app = {
 
   validate: function( string ) {
     if ( string === undefined ) {
-      return false;
+      return "";
     }
     if ( string.match(/[|&;$%@"<>()+,]/g, "") || string === "") {
-    return false;
+    return "";
     }
-  return true;
+  return string;
   },
 
+  clearMessages: function () {
+    $('.message').remove();
+  },
 
-
+  addMessage: function (username, message, roomname) {
+    var postThis = {};
+    postThis.username = username;
+    postThis.text = message;
+    postThis.roomname = roomname;
+    console.log("this is your message");
+    app.send(postThis);
+  }
 
 };
+
+$(document).ready(function () {
+
+  $('#submitButton').on("click",  function (event) {
+    event.preventDefault();
+    console.log("i work");
+    var username = $('#inputName').val();
+    var message = $('#inputMessage').val();
+    var roomname = $('#inputroomname').val();
+    console.log(username);
+    console.log(message);
+    console.log(roomname);
+    app.addMessage(username, message, roomname);
+  });
+
+});
 
 setInterval (app.fetch.bind(app), 1000);
