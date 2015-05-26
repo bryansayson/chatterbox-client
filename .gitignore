@@ -35,7 +35,6 @@ node_modules
 ### Bower ###
 **/bower_components/
 
-
 ### PhPStorm ###
 .idea/
 
